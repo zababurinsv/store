@@ -1,45 +1,55 @@
-import Task from './task/z_task.mjs'
-import emoji from './emoji/emoji.mjs'
+import loaderFS from './fs/main.mjs'
+import wasm from './fs/wasmBinary.mjs'
+import api from './fs/api.mjs'
+let fs = {}
 
-export default {
-    send: (task = '', message = {}, callback = false, skip = true) => {
-        return new Promise(async (resolve, reject) => {
-            if(skip) {
-                console.log(`${emoji('moon')[1][0]}`, task + ' start')
-                await Task.promise(task, message,(event) => {
-                    console.log(`    ${emoji('moon')[2][0]}`, task, 'finish');
-                    /**
-                     * Неопределённое поведение если в одном месте есть callback а в другом нет
-                     */
-                    (callback)
-                        ? resolve(callback(event))
-                        : resolve(event)
-                })
-            } else {
-                console.log(`    ${emoji('moon')[0][2]}`,`${task} stop`)
-                resolve({
-                    status: true,
-                    message: 'stop',
-                    _scriptDir: import.meta.url
-                })
-            }
-        })
-    },
+async function idbfs() {
+    let idbfs = await loaderFS({ wasmBinary: wasm })
+    fs = idbfs.FS
+    fs.mkdir('./fs');
+    fs.mount(idbfs.FS.filesystems.IDBFS, { test:"test" }, "./fs")
+    fs.api = await api(fs)
+    await fs.api.fsLoad();
+    console.log(fs.api)
+    return fs
+}
 
-    await:(task = '', call = (event) => { console.log('default call', event) }) => {
-        console.log(`${emoji('moon')[0][0]}`, task)
-        return Task.await(task, call)
-    },
+async function worker() {
+    let worker = new Worker(new URL('./worker.mjs', import.meta.url), { type: "module" })
 
-    list:() => {
-        return Task.list().then((item) => {
-            console.log(`${emoji('moon')[0][1]}`, item)
-        })
-    },
+    worker.onmessage = msg => {
 
-    close:(task = '')=> {
-        return Task.close(task).then((item)=>{
-            console.log(`${emoji('moon')[0][3]}`, item)
-        })
+        console.log("[Main thread] Got message back:", msg.data);
     }
+
+    worker.onerror = function(event) {
+        console.log('There is an error with your worker!', event);
+    }
+
+    worker.postMessage({test: "test"})
+}
+
+let init = {
+    worker: worker,
+    idbfs: idbfs
+}
+
+export default () => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            await init.idbfs()
+            await init.worker()
+            resolve({
+                status: "true",
+                success: true,
+                message: ''
+            })
+        } catch (e) {
+            resolve({
+                status: "false",
+                success: false,
+                message: e
+            })
+        }
+    })
 }
