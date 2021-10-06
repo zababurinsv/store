@@ -1,0 +1,27 @@
+{
+  "name": "@orbit/store",
+  "version": "1.0.0",
+  "description": "store module",
+  "main": "./dist/index.mjs",
+  "author": "Zababurin Sergey",
+  "license": "GPL-3.0-only",
+  "private": true,
+  "config": {
+    "port": 3269
+  },
+  "scripts": {
+    "start": "start",
+    "dev": "parcel ./src/index.html -p $npm_package_config_port --cache-dir ./.parcel-cache",
+    "build": "parcel build ./src/index.mjs --cache-dir ./.parcel-cache",
+    "kill": "kill $(lsof -t -i:$npm_package_config_port)",
+    "clean": "rimraf ../../.parcel-cache"
+  },
+  "devDependencies": {
+    "@babel/preset-react": "^7.14.5",
+    "npm-run-all": "^4.1.5",
+    "parcel": "2.0.0-rc.0"
+  },
+  "dependencies": {
+    "chai": "^4.3.4"
+  }
+}

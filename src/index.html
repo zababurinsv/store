@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Manager</title>
+</head>
+<body>
+</body>
+<script type="module">
+    import task from './index.mjs'
+    (async () => {
+        await task.await('/task', async (object) => {
+            object.call({task: 1, status:'1111111111'})
+        })
+
+        await task.await('/task', async (object) => {
+            object.call({task: 2, status:'2222222222'})
+        })
+        await task.send('/task', {test:"test"}, (event) => {
+
+            console.log('~~~~~~~~~~2~~~~~~~', event.task)
+        })
+    })()
+</script>
+</html>
